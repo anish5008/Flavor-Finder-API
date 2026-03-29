@@ -3,20 +3,26 @@ import os
 from dotenv import load_dotenv
 import random
 
+load_dotenv()
+API_KEY = os.getenv("SPOONACULAR_API_KEY")
+URL = "https://api.spoonacular.com/recipes/complexSearch"
 
 def main():
+    cart = "shopping_cart.txt"
+    data_written = "recipes.txt"
+    fav_file = "favorite.txt"
+
     print_header()
-    load_dotenv()
-    API_KEY = os.getenv("SPOONACULAR_API_KEY")
-    URL = "https://api.spoonacular.com/recipes/complexSearch"
 
     while True:
         print("\n************ Let's look at the choices ************")
-        print("1. Search")
-        print("2. Favorites")
-        print("3. Random recipies")
-        print("4. Saved recipies")
-        print("5. Quit")
+        print("1. Search by dish")
+        print("2. Search by ingredients")
+        print("3. Favorites")
+        print("4. Random recipes")
+        print("5. Saved recipes")
+        print("6. View the shopping cart")
+        print("7. Quit")
         print("***************************************************")
 
         try:
@@ -49,18 +55,18 @@ def main():
                 response = requests.get(URL, params=parameters)
 
                 if response.status_code == 200:
-                    recipie_list = response.json().get("results", [])
-                    if not recipie_list:
+                    recipe_list = response.json().get("results", [])
+                    if not recipe_list:
                         print("No recipes found.")
                         continue
 
-                    for dish in recipie_list:
+                    for dish in recipe_list:
                         print(f"🍴 {dish['title']} - ID: {dish['id']}")
 
                     selected_id = input("\nType the ID to see the full recipe: ")
 
                     info_url = f"https://api.spoonacular.com/recipes/{selected_id}/information"
-                    info_resp = requests.get(info_url, params={"apiKey": API_KEY})
+                    info_resp = requests.get(info_url, params={"apiKey": API_KEY, "includeNutrition": True})
 
                     if info_resp.status_code == 200:
                         data = info_resp.json()
@@ -68,44 +74,97 @@ def main():
                         for i, ing in enumerate(data.get("extendedIngredients", []), 1):
                             print(f"{i}. {ing.get('nameClean', ing['name'])}")
 
-                        print("\ninstructions:")
+                        print("\nInstructions:")
                         instructions = data.get("analyzedInstructions")
-                        if instructions:
+                        if instructions and len(instructions) > 0:
                             for step in instructions[0]["steps"]:
                                 print(f"{step['number']}. {step['step']}")
                         else:
                             print("No instructions found.")
 
-                        # Save logic
+                        nutri = input("\nSee nutrition info? (y/n): ")
+                        if nutri.lower() == "y":
+                            get_nutrients(data)
+
+                        add_to_shopping = input("\nWould you like to add ingredients to the shopping list (y/n)? ")
+                        add_to_shopping_cart(add_to_shopping, data, cart)
+
                         save = input("\nSave to favorites? (y/n): ")
                         if save.lower() == "y":
-                            with open("favorite.txt", "a") as f:
-                                f.write(data["title"] + "\n")
+                            add_favorites(data["title"] + "\n")
 
-                        data_written = "recipes.txt"
-
-                        with open(data_written, "w") as file:
-                            file.write(data["title"])
-                            file.write("\n")
-                            for instruction in data["instructions"]:
-                                file.write(instruction)
-
+                        with open(data_written, "a") as file:
+                            file.write(f"\nRecipe: {data['title']}\n")
+                            file.write("Ingredients:\n")
+                            for ing in data.get("extendedIngredients", []):
+                                file.write(f"- {ing.get('original')}\n")
                 else:
                     print(f"Error: {response.status_code}")
 
             elif first_choice == "2":
-                print("\n" + "*" * 30)
-                print("      YOUR FAVORITES      ")
-                print("*" * 30)
-                if os.path.exists("favorite.txt"):
-                    with open("favorite.txt", "r") as f:
-                        print(f.read())
-                else:
-                    print("No favorites saved yet!")
+                ingredients = input("\nEnter your ingredients separated by commas: ")
+                num = int(input("Number of recipes to search for: "))
+                new_URL = "https://api.spoonacular.com/recipes/findByIngredients"
+
+                parameters = {
+                    "apiKey": API_KEY,
+                    "ingredients": ingredients,
+                    "number": num
+                }
+
+                ingResponse = requests.get(new_URL, params=parameters)
+
+                if ingResponse.status_code == 200:
+                    results = ingResponse.json()
+
+                    for x in results:
+                        print(f"{x['title']} - ID: {x['id']}")
+
+                    selected_id = input("\nType the ID to see the full recipe: ")
+
+                    info_url = f"https://api.spoonacular.com/recipes/{selected_id}/information"
+                    info_resp = requests.get(info_url, params={"apiKey": API_KEY, "includeNutrition": True})
+
+                    if info_resp.status_code == 200:
+                        data = info_resp.json()
+                        print(f"\n--- {data['title']} ---")
+                        for i, ing in enumerate(data.get("extendedIngredients", []), 1):
+                            print(f"{i}. {ing.get('nameClean', ing['name'])}")
+
+                        print("\nInstructions:")
+                        instructions = data.get("analyzedInstructions")
+                        if instructions and len(instructions) > 0:
+                            for step in instructions[0]["steps"]:
+                                print(f"{step['number']}. {step['step']}")
+                        else:
+                            print("No instructions found.")
+
+                        nutri = input("\nSee nutrition info? (y/n): ")
+                        if nutri.lower() == "y":
+                            get_nutrients(data)
+
+                        add_to_shopping = input("\nWould you like to add the ingredients to the shopping list (y/n)? ")
+                        add_to_shopping_cart(add_to_shopping, data, cart)
+
+                        fav_choice = input("\nSave to favorites? (y/n): ")
+                        if fav_choice.lower() == "y":
+                            add_favorites(data["title"] + "\n")
+
+                        with open(data_written, "a") as file:
+                            file.write(f"\nRecipe: {data['title']}\n")
+                            file.write("Ingredients:\n")
+                            for ing in data.get("extendedIngredients", []):
+                                file.write(f"- {ing.get('original')}\n")
 
             elif first_choice == "3":
                 print("\n" + "*" * 30)
-                print("Let's create a random recipie for you!!")
+                print("      YOUR FAVORITES      ")
+                print("*" * 30)
+                get_favorites()
+
+            elif first_choice == "4":
+                print("\n" + "*" * 30)
+                print("Let's create a random recipe for you!!")
                 print("\nConnecting to Spoonacular...")
 
                 parameters = {
@@ -116,41 +175,48 @@ def main():
                 response = requests.get("https://api.spoonacular.com/recipes/random", params=parameters)
                 data = response.json()['recipes'][0]
 
-                print(f"{data["title"] } - ID: {data['id']}")
-                save = input("\n Do you want to add this to your recipies? (y/n): ")
+                print(f"{data['title']} - ID: {data['id']}")
+                save = input("\nDo you want to add this to your recipes? (y/n): ")
 
-                if save == "y":
-                    with open("recipes.txt", "a") as f:
-                        f.write(data["title"] + "\n")
+                if save.lower() == "y":
+                    add_to_recipes(data["title"] + "\n")
 
                 fav = input("\nDo you want to add this to your favorites? (y/n): ")
 
-                if fav == "y":
-                    with open("favorite.txt", "a") as f:
-                        f.write(data["title"] + "\n")
-
-
-            elif first_choice == "4":
-                print("\n" + "*" * 30)
-                print("      YOUR RECIPES      1")
-                print("*" * 30)
+                if fav.lower() == "y":
+                    add_favorites(data["title"] + "\n")
 
             elif first_choice == "5":
+                print("\n" + "*" * 30)
+                print("      YOUR RECIPES      ")
+                print("*" * 30)
+                get_recipes()
+
+            elif first_choice == "6":
+                print("\n" + "*" * 30)
+                print("      YOUR SHOPPING CART      ")
+                print("*" * 30)
+
+                if os.path.exists(cart):
+                    with open(cart, "r") as file:
+                        print(file.read())
+                else:
+                    print("No items saved in the cart yet!")
+
+            elif first_choice == "7":
                 print_footer()
                 break
 
         except ValueError:
-            print("Please enter a valid number (1, 2, or 3).")
+            print("Please enter a valid number (1-7).")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
-
 
 def print_header():
     print("\n" + "=" * 51)
     text = "Welcome to Flavor Finder!"
     print(f" {text.center(50, '-')}")
     print("=" * 51)
-
 
 def print_footer():
     print("\n" + "=" * 51)
@@ -159,26 +225,46 @@ def print_footer():
     print("=" * 51)
 
 def add_favorites(info):
-    file = "favorites.txt"
-
+    file = "favorite.txt"
     with open(file, "a") as f:
         f.write(info)
 
 def add_to_recipes(info):
     file = "recipes.txt"
-
     with open(file, "a") as f:
         f.write(info)
 
-def get_recipes(info):
+def get_recipes():
     if os.path.exists("recipes.txt"):
         with open("recipes.txt", "r") as f:
             print(f.read())
+    else:
+        print("No recipes saved yet!")
 
-def get_favorites(info):
-    if os.path.exists("favorites.txt"):
-        with open("favorites.txt", "r") as f:
+def get_favorites():
+    if os.path.exists("favorite.txt"):
+        with open("favorite.txt", "r") as f:
             print(f.read())
+    else:
+        print("No favorites saved yet!")
+
+def add_to_shopping_cart(ans, data, cart_path):
+    if ans.lower() == "y":
+        with open(cart_path, "a") as file:
+            file.write(f"\n---------- {data['title']} ----------\n")
+            for ing in data.get("extendedIngredients", []):
+                file.write(f"- {ing.get('original')} \n")
+            print("Finished adding ingredients to the shopping list.")
+
+def get_nutrients(data):
+    needed = input("Enter macros (e.g., Calories, Protein, Fat): ")
+    user_macros = [m.strip().title() for m in needed.split(",")]
+    api_nutrients = data.get("nutrition", {}).get("nutrients", [])
+
+    print("\n--- Nutritional Results ---")
+    for n in api_nutrients:
+        if n.get("name") in user_macros:
+            print(f"✅ {n['name']}: {n['amount']} {n['unit']}")
 
 if __name__ == "__main__":
     main()
