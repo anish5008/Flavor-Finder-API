@@ -1,15 +1,24 @@
-# 🍳 Flavor Finder API
+# 🍳 Flavor Finder API (Terminal Edition)
 
-Flavor Finder is a terminal-based tool that helps users discover new meals and manage their grocery needs using real-time data from the Spoonacular API.
+**Flavor Finder** is a text-based (CLI) culinary assistant built entirely in **Python**. It connects to the Spoonacular API to provide real-time recipe data, nutritional information, and kitchen management tools directly in your terminal.
+
+## 💻 Technical Environment
+- **Language:** Python 3.x
+- **Interface:** Command Line Interface (CLI)
+- **Dependencies:** `requests`, `python-dotenv`
 
 ## ✨ Features
-- **Search by Dish:** Find recipes by name with optional dietary filters (Vegan, Keto, etc.).
-- **Search by Ingredients:** Input what you have in your fridge to see what you can cook.
-- **Randomizer:** Get a surprise recipe when you don't know what to eat.
-- **Nutritional Data:** View macros like Calories, Protein, and Fat for any dish.
-- **Local Persistence:** Save your favorite recipes and shopping lists to local `.txt` files.
+- **Smart Search:** Find recipes by name or by the ingredients currently in your fridge.
+- **Dietary Filtering:** Support for Vegan, Vegetarian, and Keto restrictions.
+- **Nutritional Lookup:** Check macros like Calories, Protein, and Fat.
+- **Data Persistence:** Automatically generates and updates `shopping_cart.txt`, `favorites.txt`, and `recipes.txt` locally.
 
-## 🛠️ Technical Improvements
-- **Security:** Uses `python-dotenv` to keep API keys private and out of the source code.
-- **Robust Logic:** Features updated error handling for user inputs and API response validation.
-- **Data Parsing:** Extracts complex nested JSON data to display clean, step-by-step instructions.
+## 🚀 How to Run
+### Option A: Run from Source (Recommended for Devs)
+1. Ensure you have **Python 3** installed.
+2. Clone this repository and navigate to the folder.
+3. Install requirements: `pip install requests python-dotenv`.
+4. Create a `.env` file and add your `SPOONACULAR_API_KEY`.
+5. Run the application:
+   ```bash
+   python main.py
