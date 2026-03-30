@@ -14,6 +14,10 @@ def main():
 
     print_header()
 
+    if not API_KEY:
+        print("\n🔑 API Key not found in .env file.")
+        API_KEY = input("Please paste your Spoonacular API Key here: ").strip()
+
     while True:
         print("\n************ Let's look at the choices ************")
         print("1. Search by dish")
@@ -214,7 +218,7 @@ def main():
 
 def print_header():
     print("\n" + "=" * 51)
-    text = "Welcome to Flavor Finder!"
+    text = "Welcome to Flavor Finder!\n You have to create a free API key from Spponacular to keep mine and you data safe. \n It takes less than 2 minutes"
     print(f" {text.center(50, '-')}")
     print("=" * 51)
 
