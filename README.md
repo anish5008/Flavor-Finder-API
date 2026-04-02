@@ -14,11 +14,11 @@
 - **Data Persistence:** Automatically generates and updates `shopping_cart.txt`, `favorites.txt`, and `recipes.txt` locally.
 
 ## 🚀 How to Run
-### Option A: Run from Source (Recommended for Devs)
-1. Ensure you have **Python 3** installed.
-2. Clone this repository and navigate to the folder.
-3. Install requirements: `pip install requests python-dotenv`.
-4. Create a `.env` file and add your `SPOONACULAR_API_KEY`.
-5. Run the application:
-   ```bash
-   python main.py
+### 🚀 Running the Binary (macOS)
+1. Download and unzip `main.zip`.
+2. Open your Terminal and navigate to your Downloads folder:
+   `cd ~/Downloads`
+3. Give the file permission to run:
+   `chmod +x main`
+4. Run the program:
+   `./main`
